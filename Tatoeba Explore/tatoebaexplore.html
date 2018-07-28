@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Tatoeba Explore</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style type="text/css">
+  html, body {
+    background-color: #fff1e0;
+    height: 100%;
+  }
+    form {
+      margin-left: 2%;
+    }
+    input {
+      padding: 10px;
+      font-size: 2.4em;
+    }
+    input[type="text"] {
+      width: 45%;
+    }
+    input[type="submit"] {
+      width: 26%;
+    }
+    input[type="button"] {
+      width: 70%
+    }
+    .underline {
+      text-decoration: underline;
+    }
+    .secondary {
+      font-size: .7em;
+      display: inline-block;
+    }
+    .submissionfield { 
+      width: 390px; 
+      border: 1px solid #999999; 
+      background-color: white;
+    }
+    .submissionbutton {
+      background-color: DodgerBlue;
+      color: white;
+    }
+    .autocomplete {
+      position: relative;
+      display: inline-block;
+      
+      
+      padding-top: 30px;
+      height: 88%;
+    }
+
+    /* */
+    .autocomplete-items {
+      position: absolute;
+      border: 1px solid #d4d4d4;
+      border-bottom: none;
+      border-top: none;
+      z-index: 99;
+      /*position the autocomplete items to be the same width as the container:*/
+      top: 100%;
+      left: 0;
+      right: 0;
+    }
+    .autocomplete-items div {
+      padding: 10px;
+      cursor: pointer;
+      background-color: #fff; 
+      border-bottom: 1px solid #d4d4d4; 
+    }
+    .autocomplete-items div:hover {
+      /*when hovering an item:*/
+      background-color: #e9e9e9; 
+    }
+    .autocomplete-active {
+      /*when navigating through the items using the arrow keys:*/
+      background-color: DodgerBlue !important; 
+      color: #ffffff; 
+    }
+    img {
+      display: inline-block;
+      margin-left: 5px;
+      margin-right: 5px;
+      position: relative;
+    }
+    .result {
+      font-size: 1.5em;
+      font-family: Arial;
+      background-color: #fff;
+      padding: 12px;
+      margin: 12px;
+      break-inside: avoid;
+      box-shadow: 0 1px 3px    0 rgba(0,0,0,.2), 
+                  0 1px 1px    0 rgba(0,0,0,.14), 
+                  0 2px 1px -1px rgba(0,0,0,.12);
+    }
+    p {
+      display: inline;
+    }
+    input [type=text] {
+      background-color: white;
+    }
+    .interfere {
+      position: absolute;
+      display: none;
+      top: 30px;
+      bottom: 30px;
+      left: 20px;
+      right: 20px;
+      background-color: grey;
+      opacity: .6;
+    }
+    #wrap {
+      display: inline-block;
+      width: 50%;
+    }
+    @media screen and (max-width: 640px) {
+      #wrap {
+        display: block;
+        width: 101%;
+      }
+      input[type="text"] {
+        width: 94%;
+        margin-bottom: 5px;
+      }
+    }
+    @media screen and (min-width: 1200px) {
+      .autocomplete {
+        column-count: 2;
+        column-width: 500px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <form action="" method="get" id="form">
+    <input type="text" autocomplete="off" name="input" class="submissionfield" id="input">
+    <div id="wrap">
+      <input type="submit" value="OK" name="submitword" class="submissionbutton">
+      <input type="button" name="" value="...loading" id="switch">
+    </div>
+  </form>
+  <div class="autocomplete" id="autocomplete"></div>
+  <div class="interfere"></div>
+<script>
+  var language1 = 'eng'
+  var language2 = 'ukr'
+  const dom = {
+    getId: el => {
+      return document.getElementById(el)
+    },
+    make: (tag, options, parent) => {
+      var element = document.createElement(tag)
+      if (options["class"]) {
+        element.className = options["class"];
+      }
+      if (options.text) {
+        element.appendChild(document.createTextNode(options.text));
+      }
+
+      if (parent) {
+        parent.appendChild(element)
+      } else {
+        return element
+      }
+    }
+  }
+  const collocationCounter = {
+    render: function (i) {
+      var wordFreq = {}
+      var y = { 2: {}, 3: {}, 4: {} }
+      const words = this.wordArray(i)
+      words.map(word => {
+        return word.toLowerCase()
+      }).forEach(word => {
+        this.addWord(wordFreq, word)
+      })
+      this.reverse(wordFreq)
+
+      for (let index = 0; index < words.length; index += 1) {
+        this.recourse(words.slice(index, index + 4), y, 4)
+      }
+      //console.log(wordFreq)
+      //console.log(this.reverse(y['2']))
+    },
+    wordArray: function (str) {
+      return str.match(/\S+/g).map(word => {
+        return this.clearPunctuation(word)
+      }).filter(word => {
+        if (word !== '') return word
+      })
+    },
+    addWord: function (wordFreq, word) {
+      if (!wordFreq.hasOwnProperty(word)) {
+        wordFreq[word] = 1
+      } else {
+        wordFreq[word] += 1
+      }
+    },
+    reverse: function (wordFreq) {
+      var reversed = {}
+      for (let word in wordFreq) {
+        let freq = wordFreq[word]
+        if (reversed[freq]) {
+          reversed[freq].push(word)
+        } else {
+          reversed[freq] = [word]
+        }
+      }
+      return reversed
+    },
+    recourse: function (sequence, y, level) {
+      if (level === 1) return false
+      let key = sequence.join(' ')
+      if (y[level][key]) {
+        y[level][key] += 1
+      } else {
+        y[level][key] = 1
+      }
+      return this.recourse(sequence.slice(0, sequence.length - 1), y, level - 1)
+    },
+    clearPunctuation: function (word) {
+      if (typeof word === 'string') {
+        word = word.replace(/[\n,.?!:;()¿¡"«»\\%—–…]/g, "")
+        word = word.replace(/\`/g, "\'") // kinda special case
+        return word
+      }
+    }
+  }
+  var lang1, lang2
+  var resources = 'res/'
+  var script1 = dom.make('script', {})
+  script1.src = `${resources}${language1}${language2}.js`
+  var script2 = dom.make('script', {})
+  script2.src = `${resources}${language2}${language1}.js`
+  document.body.appendChild(script1)
+  document.body.appendChild(script2)
+
+setTimeout( function l () {
+  if (lang1 && lang2) {
+    return loaded()
+  } else {
+    setTimeout(l, 5)
+  }
+}, 2000)
+//loaded()
+function loaded() {
+  var b = []
+  for (let key in lang2['-mostused']) {
+    b = b.concat(lang2['-mostused'][key]) }
+  console.log(b)
+  var switcher = dom.getId('switch')
+  switcher.value = lang1['-lang'] + ' → ' + lang2['-lang']
+  switcher.addEventListener('click', () => {
+    switchLangs(switcher)
+  })
+  var exceptions = 0
+  var input = dom.getId('input')
+  var form = dom.getId('form')
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    doResults(e['target'][0]['value'])
+  })
+
+  var allOfThem = ''
+
+  for (let index in lang2) {
+    var obj = lang2[index]
+    if (typeof obj['s'] === 'string') {
+      allOfThem += obj['s']
+    }
+  }
+  collocationCounter.render(allOfThem)
+
+}
+
+function doResults(word) {
+  word = word.trim()
+  word = word.toLowerCase()
+  const langName1 = lang1['-lang']
+  const langName2 = lang2['-lang']
+  var list = lang1['-words'][word]
+  var a = document.getElementById('autocomplete')
+  while(a.firstChild) {
+    a.removeChild(a.firstChild)
+  }
+
+  for (let sentence of list) {
+    var sentenceObj = lang1[sentence]
+    var l1sent = sentenceObj['s']
+    
+    var l2sent
+    if (sentenceObj.o) {
+      l2sent = lang2[sentenceObj.o[langName2]]['s']
+    }
+    var result = dom.make('div', {
+      class: 'result'
+    })
+    var img2 = dom.make('img', {})
+    img2.src = 'img/' + langName2 + '.png'
+    result.appendChild(img2)
+
+    var p = dom.make('p', {
+      text: l2sent + '  ',
+      class: 'primary'
+    })
+
+    var img1 = dom.make('img', {})
+    img1.src = 'img/' + langName1 + '.png'
+    
+    var indexof = l1sent.toLowerCase().split(word)
+    var res = []
+    while (indexof.length > 0) {
+      var slice = indexof.shift()
+      var cutted = cut(l1sent, slice.length)
+      res.push(cutted[0])
+      l1sent = cutted[1]
+      var nextSlice = indexof[0]
+      if (nextSlice) {
+        var cutted = cut(l1sent, word.length)
+        var wordProper = cutted[0]
+        l1sent = cutted[1]
+        res.push(wordProper)
+      }
+    }
+    var lang2span = dom.make('span', {
+      class: 'secondary'
+    })
+    lang2span.appendChild(img1)
+    res.forEach(piece => {
+      if (piece.toLowerCase() === word) {
+        var thewordspan = dom.make('span', {
+          text: piece,
+          class: 'underline'
+        })
+        lang2span.appendChild(thewordspan)
+      } else {
+        var ordinaryspan = dom.make('span', {
+          text: piece
+        })
+        lang2span.appendChild(ordinaryspan)
+      }
+    })
+    p.appendChild(lang2span)
+    result.appendChild(p)
+    a.appendChild(result)
+  }
+
+}
+function switchLangs(switcher) {
+  var lang3 = lang2
+  lang2 = lang1
+  lang1 = lang3
+  switcher.value = lang1['-lang'] + ' → ' + lang2['-lang']
+}
+//  var subtree = lang1['-tree']
+//  function autocomplete(inp) {
+//      var currentFocus;
+//      /*execute a function when someone writes in the text field:*/
+//      inp.addEventListener("input", function (e) {
+//        var div, b, i, val = this.value;
+//        var char = val.slice(val.length - 1)
+//        /*close any already open lists of autocompleted values*/
+//        closeAllLists();
+//        if (!val) { return false; }
+//        currentFocus = -1;
+//        /*create a DIV element that will contain the items (values):*/
+//        div = document.createElement("DIV");
+//        div.setAttribute("id", this.id + "autocomplete-list");
+//        div.setAttribute("class", "autocomplete-items");
+//        /*append the DIV element as a child of the autocomplete container:*/
+//        this.parentNode.appendChild(div);
+//        subtree = subtree[char]
+//        var arr = valuesFromSubtree(val, subtree)
+//        console.log(possibleList)
+//        /*for each item in the array...*/
+//        //for (i = 0; i < arr.length; i++) {
+//        //  /*check if the item starts with the same letters as the text field value:*/
+//        //  if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+//        //    console.log('here')
+//        //    /*create a DIV element for each matching element:*/
+//        //    b = document.createElement("DIV");
+//        //    /*make the matching letters bold:*/
+//        //    b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+//        //    b.innerHTML += arr[i].substr(val.length);
+//        //    /*insert a input field that will hold the current array item's value:*/
+//        //    b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+//        //    /*execute a function when someone clicks on the item value (DIV element):*/
+//        //    b.addEventListener("click", function (e) {
+//        //      /*insert the value for the autocomplete text field:*/
+//        //      inp.value = this.getElementsByTagName("input")[0].value;
+//        //      /*close the list of autocompleted values,
+//        //      (or any other open lists of autocompleted values:*/
+//        //      closeAllLists();
+//        //    });
+//        //    div.appendChild(b);
+//        //  }
+//        //}
+//      });
+//      /*execute a function presses a key on the keyboard:*/
+//      inp.addEventListener("keydown", function (e) {
+//        var x = document.getElementById(this.id + "autocomplete-list");
+//        if (x) x = x.getElementsByTagName("div");
+//        if (e.keyCode == 40) {
+//          /*If the arrow DOWN key is pressed,
+//          increase the currentFocus variable:*/
+//          currentFocus++;
+//          /*and and make the current item more visible:*/
+//          addActive(x);
+//        } else if (e.keyCode == 38) { //up
+//          /*If the arrow UP key is pressed,
+//          decrease the currentFocus variable:*/
+//          currentFocus--;
+//          /*and and make the current item more visible:*/
+//          addActive(x);
+//        } else if (e.keyCode == 13) {
+//          /*If the ENTER key is pressed, prevent the form from being submitted,*/
+//          e.preventDefault();
+//          if (currentFocus > -1) {
+//            /*and simulate a click on the "active" item:*/
+//            if (x) x[currentFocus].click();
+//          }
+//        }
+//      });
+//      function addActive(x) {
+//        /*a function to classify an item as "active":*/
+//        if (!x) return false;
+//        /*start by removing the "active" class on all items:*/
+//        removeActive(x);
+//        if (currentFocus >= x.length) currentFocus = 0;
+//        if (currentFocus < 0) currentFocus = (x.length - 1);
+//        /*add class "autocomplete-active":*/
+//        x[currentFocus].classList.add("autocomplete-active");
+//      }
+//      function removeActive(x) {
+//        /*a function to remove the "active" class from all autocomplete items:*/
+//        for (var i = 0; i < x.length; i++) {
+//          x[i].classList.remove("autocomplete-active");
+//        }
+//      }
+//      function closeAllLists(elmnt) {
+//        /*close all autocomplete lists in the document,
+//        except the one passed as an argument:*/
+//        var x = document.getElementsByClassName("autocomplete-items");
+//        for (var i = 0; i < x.length; i++) {
+//          if (elmnt != x[i] && elmnt != inp) {
+//            x[i].parentNode.removeChild(x[i]);
+//          }
+//        }
+//      }
+//      /*execute a function when someone clicks in the document:*/
+//      document.addEventListener("click", function (e) {
+//        closeAllLists(e.target);
+//      });
+//    }
+//
+//    var countries = Object.keys(lang1['-words'])
+//
+//    /*initiate the autocomplete function on the "myInput" element, and pass along the countries array as possible autocomplete values:*/
+//    autocomplete(document.getElementById("input"), countries);
+//    var possibleList = []
+//
+//    function valuesFromSubtree(prev, subtree) {
+//      prev = prev.split('')
+//      if (Object.keys(subtree).length > 0 && prev.length > 0) {
+//        let char = prev.shift()
+//        valuesFromSubtree(prev.join(''), subtree[char])
+//      } else {
+//        processSubtree(subtree)
+//      }
+//
+//      function processSubtree(subtree) {
+//        for (let key in subtree) {
+//          if (key === 'end?') {
+//            possibleList.push(prev)
+//          }
+//        }
+//        if 
+//      }
+//
+//    }
+  function cut(str, index) {
+    var part1 = str.substring(0, index)
+    var part2 = str.substring(index, str.length)
+    return [part1, part2]
+  }
+  (function () {
+      function scrollHorizontally(e) {
+        e = window.event || e;
+        var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+        document.documentElement.scrollLeft -= (delta * 240); // Multiplied by 40
+        document.body.scrollLeft -= (delta * 240); // Multiplied by 40
+        e.preventDefault();
+      }
+      if (window.addEventListener) {
+        // IE9, Chrome, Safari, Opera
+        window.addEventListener("mousewheel", scrollHorizontally, false);
+        // Firefox
+        window.addEventListener("DOMMouseScroll", scrollHorizontally, false);
+      } else {
+        // IE 6/7/8
+        window.attachEvent("onmousewheel", scrollHorizontally);
+      }
+    })();
+</script>
+</body>
+</html>
+<!-- 
+1. Script '(1) active.js' processes sentences.csv 
+   and returns object composed of pairs: sentence_index : sentence_language
+   Sentence language is then productively used in script 2
+   This object is written out to active.json
+2. Script '(2) links.js' processes active.json and links.csv
+   It defines group of links corresponding to one number in the left column,
+   and makes this group an object. 
+   Function processGroup starts for relevant objects ( determined using active.json )
+   and makes languages key and index value.
+   Then group object is added to the list of relevant links, 
+   which is saved to file 'links.json'
+3. Script '(3) process.js' goes back to sentences.csv and uses links.json
+   It processes records in sentences.csv and take those corresponding to each language.
+   Then writes out an object for each sentence. This object consists of
+   key 's' — sentence, and 'o' - indexes of this sentence in other languages,
+   taken from links.json
+   Returns garbage-${lang}.js for each language
+4a.Script '(4a) pairs.js' takes previously generated garbage-${lang}.js
+   Language pair must be specified
+   Takes each object key and deletes it if it has no reference to other language.
+   If such references exist, sentence is being broken down to words.
+   Word becomes totally lowercase and stripped of all punctuation.
+   Separate function makes tree-like object of all characters of this word.
+   Separate function makes object, in which to every word corresponds array 
+   of sentences in which it occurs
+-->
