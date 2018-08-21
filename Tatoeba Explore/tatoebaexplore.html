@@ -108,7 +108,7 @@
       left: 20px;
       right: 20px;
       background-color: grey;
-      opacity: .6;
+      opacity: .99;
     }
     #wrap {
       display: inline-block;
@@ -130,6 +130,23 @@
         column-width: 500px;
       }
     }
+    .pair-form {
+    width: 400px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+    #set1, #set2 {
+      display: grid;
+    }
+    fieldset {
+      border-width: 0;
+    }
+    label {
+      padding: 6px;
+    }
+    input[type=radio]:checked {
+      background-color: red;
+    }
   </style>
 </head>
 <body>
@@ -141,100 +158,216 @@
     </div>
   </form>
   <div class="autocomplete" id="autocomplete"></div>
-  <div class="interfere"></div>
+  <div class="interfere" id="interfere">
+    <button name="" id="sub">Button</button>
+  </div>
 <script>
-  var language1 = 'eng'
-  var language2 = 'pol'
-  const dom = {
-    getId: el => {
-      return document.getElementById(el)
-    },
-    make: (tag, options, parent) => {
-      var element = document.createElement(tag)
-      if (options["class"]) {
-        element.className = options["class"];
-      }
-      if (options.text) {
-        element.appendChild(document.createTextNode(options.text));
-      }
-
-      if (parent) {
-        parent.appendChild(element)
-      } else {
-        return element
-      }
-    }
+"use strict";
+var language1 = 'eng'
+var language2 = 'pol'
+const is = {
+  array: (presumablyArray) => {
+    return presumablyArray.constructor === Array
+  },
+  object: (presumablyObject) => {
+    return presumablyObject.constructor === Object
   }
-  const collocationCounter = {
-    render: function (i) {
-      var wordFreq = {}
-      var y = { 2: {}, 3: {}, 4: {} }
-      const words = this.wordArray(i)
-      words.map(word => {
-        return word.toLowerCase()
-      }).forEach(word => {
-        this.addWord(wordFreq, word)
-      })
-      this.reverse(wordFreq)
+}
+const dom = {
+  getId: function (el) {
+    return document.getElementById(el)
+  },
+  getQuery: function (el) {
+    return document.querySelector(el)
+  },
+  setIfDefined: function (val, set, pt) {
+    if (val) {
+      set[pt] = val
+    }
+  },
+  make: function (tag, options, parent) {
+    var element = document.createElement(tag)
+    ['id', 'type', 'value', 'name', 'src'].forEach(el => {
+      this.setIfDefined(options[el], element, el)
+    })
+    this.setIfDefined(options["class"], element, 'className')
+    this.setIfDefined(options.for, element, 'htmlFor')
+    if (options.text) {
+      element.appendChild(document.createTextNode(options.text));
+    }
+    if (parent) {
+      parent.appendChild(element)
+    }
+    return element
+  },
+  render: function (scheme) {
+    var element
+    if (scheme.el) {
+      element = this.make(scheme.el[0], scheme.el[1])
 
-      for (let index = 0; index < words.length; index += 1) {
-        this.recourse(words.slice(index, index + 4), y, 4)
-      }
-      //console.log(wordFreq)
-      //console.log(this.reverse(y['2']))
-    },
-    wordArray: function (str) {
-      return str.match(/\S+/g).map(word => {
-        return this.clearPunctuation(word)
-      }).filter(word => {
-        if (word !== '') return word
-      })
-    },
-    addWord: function (wordFreq, word) {
-      if (!wordFreq.hasOwnProperty(word)) {
-        wordFreq[word] = 1
-      } else {
-        wordFreq[word] += 1
-      }
-    },
-    reverse: function (wordFreq) {
-      var reversed = {}
-      for (let word in wordFreq) {
-        let freq = wordFreq[word]
-        if (reversed[freq]) {
-          reversed[freq].push(word)
-        } else {
-          reversed[freq] = [word]
+      if (scheme.ch) {
+        // just one child
+        if (is.object(scheme.ch)) {
+          element.appendChild(this.render(scheme.ch))
+        }
+        // multiple children
+        if (is.array(scheme.ch)) {
+          scheme.ch.forEach(child => {
+            element.appendChild(this.render(child))
+          })
         }
       }
-      return reversed
-    },
-    recourse: function (sequence, y, level) {
-      if (level === 1) return false
-      let key = sequence.join(' ')
-      if (y[level][key]) {
-        y[level][key] += 1
+    }
+    return element
+  }
+}
+const collocationCounter = {
+  render: function (i) {
+    var wordFreq = {}
+    var y = { 2: {}, 3: {}, 4: {} }
+    const words = this.wordArray(i)
+    words.map(word => {
+      return word.toLowerCase()
+    }).forEach(word => {
+      this.addWord(wordFreq, word)
+    })
+    this.reverse(wordFreq)
+
+    for (let index = 0; index < words.length; index += 1) {
+      this.recourse(words.slice(index, index + 4), y, 4)
+    }
+    //console.log(wordFreq)
+    //console.log(this.reverse(y['2']))
+  },
+  wordArray: function (str) {
+    return str.match(/\S+/g).map(word => {
+      return this.clearPunctuation(word)
+    }).filter(word => {
+      if (word !== '') return word
+    })
+  },
+  addWord: function (wordFreq, word) {
+    if (!wordFreq.hasOwnProperty(word)) {
+      wordFreq[word] = 1
+    } else {
+      wordFreq[word] += 1
+    }
+  },
+  reverse: function (wordFreq) {
+    var reversed = {}
+    for (let word in wordFreq) {
+      let freq = wordFreq[word]
+      if (reversed[freq]) {
+        reversed[freq].push(word)
       } else {
-        y[level][key] = 1
-      }
-      return this.recourse(sequence.slice(0, sequence.length - 1), y, level - 1)
-    },
-    clearPunctuation: function (word) {
-      if (typeof word === 'string') {
-        word = word.replace(/[\n,.?!:;()¿¡"«»\\%—–…]/g, "")
-        word = word.replace(/\`/g, "\'") // kinda special case
-        return word
+        reversed[freq] = [word]
       }
     }
+    return reversed
+  },
+  recourse: function (sequence, y, level) {
+    if (level === 1) return false
+    let key = sequence.join(' ')
+    if (y[level][key]) {
+      y[level][key] += 1
+    } else {
+      y[level][key] = 1
+    }
+    return this.recourse(sequence.slice(0, sequence.length - 1), y, level - 1)
+  },
+  clearPunctuation: function (word) {
+    if (typeof word === 'string') {
+      word = word.replace(/[\n,.?!:;()¿¡"«»\\%—–…]/g, "")
+      word = word.replace(/\`/g, "\'") // kinda special case
+      return word
+    }
   }
-  var lang1, lang2
-  var resources = 'res/'
-  var script1 = dom.make('script', {})
-  script1.src = `${resources}${language1}${language2}.js`
-  var script2 = dom.make('script', {})
-  script2.src = `${resources}${language2}${language1}.js`
-  document.body.appendChild(script1)
-  document.body.appendChild(script2)
+}
+var lang1, lang2
+var languages = ["ukr", "rus", "deu", "fra", "spa", "por", "eng", "pol", "ita", "ces", "lat", "tur"]
+var langMap = {
+  "ukr": ["Ukrainian"],
+  "rus": ["Russian"],
+  "deu": ["German"],
+  "fra": ["French"],
+  "spa": ["Spanish"],
+  "por": ["Portugese"],
+  "eng": ["English"],
+  "pol": ["Polish"],
+  "ita": ["Italian"],
+  "ces": ["Czech"],
+  "lat": ["Latin"],
+  "tur": ["Turkish"]
+}
+
+document.addEventListener('keypress', e => {
+  if (e.charCode === 10 && e.ctrlKey === true) {
+    
+    dom.getId('interfere').appendChild(dom.render({
+      'el': ['div', { class: 'pair-form' }],
+      'ch': [{
+        "el": ['div', { class: "pair-half" }],
+        "ch": {
+          "el": ['fieldset', { id: 'set1' }],
+        }
+      }, {
+        "el": ['div', { class: "pair-half" }],
+        "ch": {
+          "el": ['fieldset', { id: 'set2' }],
+        }
+      }]
+    }))
+    renderLangList(dom.getId('set1'))
+    renderLangList(dom.getId('set2'))
+
+    dom.getId('interfere').style.display = 'block'
+    dom.getId('sub').addEventListener('click', e => {
+      language1 = document.querySelector('#set1 input:checked').value
+      language2 = document.querySelector('#set2 input:checked').value
+      scripts.rm()
+      scripts.add()
+    })
+
+    function renderLangList(fieldset) {
+      let rand = Math.floor(1000000000 * Math.random())
+      languages.forEach(lang => {
+        var scheme = {
+          "el": ['div', { class: 'repeated' }],
+          "ch": [{
+            "el": ['input', {
+              id: lang + rand,
+              type: 'radio',
+              name: 'field' + rand,
+              value: lang
+            }]
+          }, {
+            "el": ['label', { for: lang + rand }],
+            "ch": [{ "el": ['img', { src: 'img\\' + lang + '.png' }] },
+            { "el": ['span', { text: langMap[lang][0] }] }
+            ]
+          }]
+        }
+        fieldset.appendChild(dom.render(scheme))
+      })
+    }
+  }
+})
+const scripts = {
+  resources: 'res/',
+  add: function () {
+    dom.make('script', {src: `${scripts.resources}${language1}${language2}.js`, id: 'l1' }, document.body)
+    dom.make('script', {src: `${scripts.resources}${language2}${language1}.js`, id: 'l2' }, document.body)
+  },
+  rm: function () {
+    var l1 = dom.getId('l1')
+    l1.parentNode.removeChild(l1)
+    var l2 = dom.getId('l2')
+    l2.parentNode.removeChild(l2)
+    dom.getId('interfere').style.display = 'none'
+    loaded()
+  }
+}
+scripts.add()
 
 setTimeout( function l () {
   if (lang1 && lang2) {
@@ -492,15 +625,10 @@ function switchLangs(switcher) {
         document.body.scrollLeft -= (delta * 240); // Multiplied by 40
         e.preventDefault();
       }
-      if (window.addEventListener) {
-        // IE9, Chrome, Safari, Opera
-        window.addEventListener("mousewheel", scrollHorizontally, false);
-        // Firefox
-        window.addEventListener("DOMMouseScroll", scrollHorizontally, false);
-      } else {
-        // IE 6/7/8
-        window.attachEvent("onmousewheel", scrollHorizontally);
-      }
+      // IE9, Chrome, Safari, Opera
+      window.addEventListener("mousewheel", scrollHorizontally, false);
+      // Firefox
+      window.addEventListener("DOMMouseScroll", scrollHorizontally, false);
     })();
 </script>
 </body>
