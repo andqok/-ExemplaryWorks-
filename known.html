@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Document</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+<script src="res/engfra.js"></script>
+<script src="res/fraeng.js"></script>
+<script>
+// get sentences with random one of known words
+var knownWords = {
+  known: ['online', 'phrase', 'pilot', 'stable', 'merely', 'resolution', 'communicate', 'injury', 'vast', 'exhibition', 'producer', 'regional', 'immediate', 'incident', 'childhood', 'draft'],
+  randKnown: function(except) {
+    if (except && except.length > 0) {
+      except.forEach(el => {
+        rmArrElement(this.known, el)
+      })
+    }
+    return this.known[ Math.round(Math.random() * this.known.length)]
+  }
+}
+var words = {}
+function rmArrElement(arr, el) {
+  arr.splice(arr.indexOf(el), 1)
+  return arr
+}
+
+lang1['-words'][ knownWords.randKnown() ].forEach(index => {
+  console.log(lang1[index]['s'])
+})
+
+function createStrObj() {
+  
+}
+
+</script>
+</body>
+</html>

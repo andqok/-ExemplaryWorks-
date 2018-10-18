@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Tatoeba Explore</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style type="text/css">
+  html, body {
+    background-color: #fff1e0;
+    height: 100%;
+  }
+    form {
+      margin-left: 2%;
+    }
+    input {
+      padding: 10px;
+      font-size: 2.4em;
+    }
+    input[type="text"] {
+      width: 45%;
+    }
+    input[type="submit"] {
+      width: 26%;
+    }
+    input[type="button"] {
+      width: 34%
+    }
+    .underline {
+      text-decoration: underline;
+    }
+    .secondary {
+      font-size: .7em;
+      display: inline-block;
+    }
+    .submissionfield { 
+      width: 390px; 
+      border: 1px solid #999999; 
+      background-color: white;
+    }
+    .submissionbutton {
+      background-color: DodgerBlue;
+      color: white;
+    }
+    .autocomplete {
+      position: relative;
+      display: inline-block;
+      
+      
+      padding-top: 30px;
+      height: 88%;
+    }
+
+    /* */
+    .autocomplete-items {
+      position: absolute;
+      border: 1px solid #d4d4d4;
+      border-bottom: none;
+      border-top: none;
+      z-index: 99;
+      /*position the autocomplete items to be the same width as the container:*/
+      top: 100%;
+      left: 0;
+      right: 0;
+    }
+    .autocomplete-items div {
+      padding: 10px;
+      cursor: pointer;
+      background-color: #fff; 
+      border-bottom: 1px solid #d4d4d4; 
+    }
+    .autocomplete-items div:hover {
+      /*when hovering an item:*/
+      background-color: #e9e9e9; 
+    }
+    .autocomplete-active {
+      /*when navigating through the items using the arrow keys:*/
+      background-color: DodgerBlue !important; 
+      color: #ffffff; 
+    }
+    img {
+      display: inline-block;
+      margin-left: 5px;
+      margin-right: 5px;
+      position: relative;
+    }
+    .result {
+      font-size: 1.5em;
+      font-family: Arial;
+      background-color: #fff;
+      padding: 12px;
+      margin: 12px;
+      break-inside: avoid;
+      box-shadow: 0 1px 3px    0 rgba(0,0,0,.2), 
+                  0 1px 1px    0 rgba(0,0,0,.14), 
+                  0 2px 1px -1px rgba(0,0,0,.12);
+    }
+    p {
+      display: inline;
+    }
+    input [type=text] {
+      background-color: white;
+    }
+    .interfere {
+      position: absolute;
+      display: none;
+      top: 30px;
+      bottom: 30px;
+      left: 20px;
+      right: 20px;
+      background-color: grey;
+      opacity: .99;
+    }
+    #wrap {
+      display: inline-block;
+      width: 50%;
+    }
+    @media screen and (max-width: 640px) {
+      #wrap {
+        display: block;
+        width: 101%;
+      }
+      input[type="text"] {
+        width: 94%;
+        margin-bottom: 5px;
+      }
+    }
+    @media screen and (min-width: 1200px) {
+      .autocomplete {
+        column-count: 2;
+        column-width: 500px;
+      }
+    }
+    .pair-form {
+    width: 400px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+    #set1, #set2 {
+      display: grid;
+    }
+    fieldset {
+      border-width: 0;
+    }
+    label {
+      padding: 6px;
+    }
+    input[type=radio]:checked {
+      background-color: red;
+    }
+    .hex {
+    font-size: 2em;
+    background-color: cadetblue;
+    border-radius: 10px;
+    border: 2px solid black;
+    width: 1em;
+    margin-top: 5px;
+    padding-left: .5em;
+    }
+    .word {
+    width: 5em;
+    font-size: 2em;
+    font-family: Arial;
+    background-color: greenyellow;
+    margin-top: 5px;
+    }
+    #parent {
+    position: absolute;
+    display: none;
+    grid-template-columns: 70px 78px 1fr;
+    background-color: aquamarine;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    right: 3px;
+    padding: 15px;
+}
+  </style>
+</head>
+<body>
+  <form action="" method="get" id="form">
+    <input type="text" autocomplete="off" name="input" class="submissionfield" id="input">
+    <div id="wrap">
+      <input type="submit" value="OK" name="submitword" class="submissionbutton">
+      <input type="button" name="" value="...loading" id="switch">
+      <input type="button" id="words" value="words">
+    </div>
+  </form>
+  <div class="autocomplete" id="autocomplete"></div>
+  <div class="interfere" id="interfere">
+    <button name="" id="sub">Button</button>
+  </div>
+  <div id="parent"></div>
+<script src="hex·eng·4096.js"></script>
+<script src="lemmatized·eng.js"></script>
+<script>
+"use strict";
+var language1 = 'eng'
+var language2 = 'pol'
+const is = {
+  array: (presumablyArray) => {
+    return presumablyArray.constructor === Array
+  },
+  object: (presumablyObject) => {
+    return presumablyObject.constructor === Object
+  }
+}
+let hexList = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+
+var id = function (i) {
+  return document.getElementById(i)
+}
+var setIfDefined = function (val, set, pt) {
+    if (val) {
+      set[pt] = val
+    }
+  }
+var make = function (tag, options, parent) {
+  var element = document.createElement(tag);
+  ['id', 'type', 'value', 'name', 'src'].forEach(el => {
+    setIfDefined(options[el], element, el)
+  })
+  setIfDefined(options["class"], element, 'className')
+  setIfDefined(options.for, element, 'htmlFor')
+  if (options.text) {
+    element.appendChild(document.createTextNode(options.text));
+  }
+  if (parent) {
+    parent.appendChild(element)
+  }
+  return element
+}
+const dom = {
+  getId: function (el) {
+    return document.getElementById(el)
+  },
+  getQuery: function (el) {
+    return document.querySelector(el)
+  },
+  setIfDefined: function (val, set, pt) {
+    if (val) {
+      set[pt] = val
+    }
+  },
+  make: function (tag, options, parent) {
+    var element = document.createElement(tag)
+    ;['id', 'type', 'value', 'name', 'src'].forEach(el => {
+      this.setIfDefined(options[el], element, el)
+    })
+    this.setIfDefined(options["class"], element, 'className')
+    this.setIfDefined(options.for, element, 'htmlFor')
+    if (options.text) {
+      element.appendChild(document.createTextNode(options.text));
+    }
+    if (parent) {
+      parent.appendChild(element)
+    }
+    return element
+  },
+  render: function (scheme) {
+    var element
+    if (scheme.el) {
+      element = this.make(scheme.el[0], scheme.el[1])
+
+      if (scheme.ch) {
+        // just one child
+        if (is.object(scheme.ch)) {
+          element.appendChild(this.render(scheme.ch))
+        }
+        // multiple children
+        if (is.array(scheme.ch)) {
+          scheme.ch.forEach(child => {
+            element.appendChild(this.render(child))
+          })
+        }
+      }
+    }
+    return element
+  }
+}
+const collocationCounter = {
+  render: function (i) {
+    var wordFreq = {}
+    var y = { 2: {}, 3: {}, 4: {} }
+    const words = this.wordArray(i)
+    words.map(word => {
+      return word.toLowerCase()
+    }).forEach(word => {
+      this.addWord(wordFreq, word)
+    })
+    this.reverse(wordFreq)
+
+    for (let index = 0; index < words.length; index += 1) {
+      this.recourse(words.slice(index, index + 4), y, 4)
+    }
+  },
+  wordArray: function (str) {
+    return str.match(/\S+/g).map(word => {
+      return this.clearPunctuation(word)
+    }).filter(word => {
+      if (word !== '') return word
+    })
+  },
+  addWord: function (wordFreq, word) {
+    if (!wordFreq.hasOwnProperty(word)) {
+      wordFreq[word] = 1
+    } else {
+      wordFreq[word] += 1
+    }
+  },
+  reverse: function (wordFreq) {
+    var reversed = {}
+    for (let word in wordFreq) {
+      let freq = wordFreq[word]
+      if (reversed[freq]) {
+        reversed[freq].push(word)
+      } else {
+        reversed[freq] = [word]
+      }
+    }
+    return reversed
+  },
+  recourse: function (sequence, y, level) {
+    if (level === 1) return false
+    let key = sequence.join(' ')
+    if (y[level][key]) {
+      y[level][key] += 1
+    } else {
+      y[level][key] = 1
+    }
+    return this.recourse(sequence.slice(0, sequence.length - 1), y, level - 1)
+  },
+  clearPunctuation: function (word) {
+    if (typeof word === 'string') {
+      word = word.replace(/[\n,.?!:;()¿¡"«»\\%—–…]/g, "")
+      word = word.replace(/\`/g, "\'") // kinda special case
+      return word
+    }
+  }
+}
+var lang1, lang2
+var languages = ["ukr", "rus", "deu", "fra", "spa", "por", "eng", "pol", "ita", "ces", "lat", "tur"]
+var langMap = {
+  "ukr": ["Ukrainian"],
+  "rus": ["Russian"],
+  "deu": ["German"],
+  "fra": ["French"],
+  "spa": ["Spanish"],
+  "por": ["Portugese"],
+  "eng": ["English"],
+  "pol": ["Polish"],
+  "ita": ["Italian"],
+  "ces": ["Czech"],
+  "lat": ["Latin"],
+  "tur": ["Turkish"]
+}
+
+document.addEventListener('keypress', e => {
+  if (e.charCode === 10 && e.ctrlKey === true) {
+    
+    dom.getId('interfere').appendChild(dom.render({
+      'el': ['div', { class: 'pair-form' }],
+      'ch': [{
+        "el": ['div', { class: "pair-half" }],
+        "ch": {
+          "el": ['fieldset', { id: 'set1' }],
+        }
+      }, {
+        "el": ['div', { class: "pair-half" }],
+        "ch": {
+          "el": ['fieldset', { id: 'set2' }],
+        }
+      }]
+    }))
+    renderLangList(dom.getId('set1'))
+    renderLangList(dom.getId('set2'))
+
+    dom.getId('interfere').style.display = 'block'
+    dom.getId('sub').addEventListener('click', e => {
+      language1 = document.querySelector('#set1 input:checked').value
+      language2 = document.querySelector('#set2 input:checked').value
+      scripts.rm()
+      scripts.add()
+    })
+
+    function renderLangList(fieldset) {
+      let rand = Math.floor(1000000000 * Math.random())
+      languages.forEach(lang => {
+        var scheme = {
+          "el": ['div', { class: 'repeated' }],
+          "ch": [
+          {
+            "el": ['input', {
+              id: lang + rand,
+              type: 'radio',
+              name: 'field' + rand,
+              value: lang
+            }]
+          }, 
+          {
+            "el": ['label', { for: lang + rand }],
+            "ch": [
+              {"el": ['img',  { src: 'img\\' + lang + '.png' }] },
+              {"el": ['span', { text: langMap[lang][0] }] }
+            ]
+          }]
+        }
+        fieldset.appendChild(dom.render(scheme))
+      })
+    }
+  }
+})
+
+dom.getId('words').addEventListener('click', () => {
+  dom.getId('parent').style.display = 'grid'
+  while (dom.getId('parent').firstChild) {
+    dom.getId('parent').removeChild(dom.getId('parent').firstChild)
+  }
+  render1()
+})
+
+const scripts = {
+  resources: 'res/',
+  add: function () {
+    dom.make('script', {src: `${scripts.resources}${language1}${language2}.js`, id: 'l1' }, document.body)
+    dom.make('script', {src: `${scripts.resources}${language2}${language1}.js`, id: 'l2' }, document.body)
+  },
+  rm: function () {
+    var l1 = dom.getId('l1')
+    l1.parentNode.removeChild(l1)
+    var l2 = dom.getId('l2')
+    l2.parentNode.removeChild(l2)
+    dom.getId('interfere').style.display = 'none'
+    loaded()
+  }
+}
+scripts.add()
+
+setTimeout( function l () {
+  if (lang1 && lang2) {
+    return loaded()
+  } else {
+    setTimeout(l, 5)
+  }
+}, 2000)
+//loaded()
+function loaded() {
+  var b = []
+  for (let key in lang2['-mostused']) {
+    b = b.concat(lang2['-mostused'][key]) }
+  console.log(b)
+  var switcher = dom.getId('switch')
+  switcher.value = lang1['-lang'] + ' → ' + lang2['-lang']
+  switcher.addEventListener('click', () => {
+    switchLangs(switcher)
+  })
+  var exceptions = 0
+  var input = dom.getId('input')
+  var form = dom.getId('form')
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    doResults(e['target'][0]['value'])
+  })
+
+  //var allOfThem = ''
+//
+  //for (let index in lang2) {
+  //  var obj = lang2[index]
+  //  if (typeof obj['s'] === 'string') {
+  //    allOfThem += obj['s']
+  //  }
+  //}
+  //collocationCounter.render(allOfThem)
+
+}
+
+function doResults(word) {
+  word = word.trim()
+  word = word.toLowerCase()
+  const langName1 = lang1['-lang']
+  const langName2 = lang2['-lang']
+  var list = lang1['-words'][word]
+  console.log(list)
+  var a = document.getElementById('autocomplete')
+  while(a.firstChild) {
+    a.removeChild(a.firstChild)
+  }
+
+  for (let sentence of list) {
+    var sentenceObj = lang1[sentence]
+    var l1sent = sentenceObj['s']
+    
+    var l2sent
+    if (sentenceObj.o) {
+      l2sent = lang2[sentenceObj.o]['s']
+    }
+    var result = dom.make('div', {
+      class: 'result'
+    })
+    var img2 = dom.make('img', {})
+    img2.src = 'img/' + langName2 + '.png'
+    result.appendChild(img2)
+
+    var p = dom.make('p', {
+      text: l2sent + '  ',
+      class: 'primary'
+    })
+
+    var img1 = dom.make('img', {})
+    img1.src = 'img/' + langName1 + '.png'
+    
+    var indexof = l1sent.toLowerCase().split(word)
+    var res = []
+    while (indexof.length > 0) {
+      var slice = indexof.shift()
+      var cutted = cut(l1sent, slice.length)
+      res.push(cutted[0])
+      l1sent = cutted[1]
+      var nextSlice = indexof[0]
+      if (nextSlice) {
+        var cutted = cut(l1sent, word.length)
+        var wordProper = cutted[0]
+        l1sent = cutted[1]
+        res.push(wordProper)
+      }
+    }
+    var lang2span = dom.make('span', {
+      class: 'secondary'
+    })
+    lang2span.appendChild(img1)
+    res.forEach(piece => {
+      if (piece.toLowerCase() === word) {
+        var thewordspan = dom.make('span', {
+          text: piece,
+          class: 'underline'
+        })
+        lang2span.appendChild(thewordspan)
+      } else {
+        var ordinaryspan = dom.make('span', {
+          text: piece
+        })
+        lang2span.appendChild(ordinaryspan)
+      }
+    })
+    p.appendChild(lang2span)
+    result.appendChild(p)
+    a.appendChild(result)
+  }
+
+}
+function switchLangs(switcher) {
+  var lang3 = lang2
+  lang2 = lang1
+  lang1 = lang3
+  switcher.value = lang1['-lang'] + ' → ' + lang2['-lang']
+}
+  function render1() {
+    if (id('parent2')) {
+      id('parent').removeChild(id('parent2'))
+    }
+    if (id('parent3')) {
+      id('parent').removeChild(id('parent3'))
+    }
+    let parent = make('div', { id: 'parent1' }, id('parent'))
+    hexList.forEach(item => {
+
+      make('div', { class: 'hex', text: item, id: '1-' + item }, parent)
+        .addEventListener('click', (e) => {
+          if (id('parent2')) {
+            id('parent').removeChild(id('parent2'))
+          }
+          if (id('parent3')) {
+            id('parent').removeChild(id('parent3'))
+          }
+          console.log(e.srcElement.id)
+          render2(e.srcElement.id)
+        })
+    })
+  }
+  function render2(el1) {
+    if (id('parent3')) {
+      id('parent').removeChild(id('parent3'))
+    }
+    let parent = make('div', { id: 'parent2' }, id('parent'))
+    hexList.forEach(item => {
+
+      make('div', { class: 'hex', text: item, id: '2-' + item }, parent)
+        .addEventListener('click', (e) => {
+          if (id('parent3')) {
+            id('parent').removeChild(id('parent3'))
+          }
+          let el2 = e.srcElement.id
+          console.log(el2)
+          render3(el1.slice(2), el2.slice(2))
+        })
+    })
+  }
+  function render3(el1, el2) {
+    let parent = make('div', { id: 'parent3' }, id('parent'))
+    for (let key in newwords[el1][el2]) {
+      let word = newwords[el1][el2][key]
+      make('div', { class: 'word', text: word, id: '2-' + key }, parent)
+        .addEventListener('click', e => {
+          dom.getId('parent').style.display = 'none';
+          doResults(e.srcElement.innerHTML)
+        })
+    }
+  }
+function cut(str, index) {
+  var part1 = str.substring(0, index)
+  var part2 = str.substring(index, str.length)
+  return [part1, part2]
+}
+  (function () {
+      function scrollHorizontally(e) {
+        e = window.event || e;
+        var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+        document.documentElement.scrollLeft -= (delta * 240); // Multiplied by 40
+        document.body.scrollLeft -= (delta * 240); // Multiplied by 40
+        e.preventDefault();
+      }
+      // IE9, Chrome, Safari, Opera
+      window.addEventListener("mousewheel", scrollHorizontally, false);
+      // Firefox
+      window.addEventListener("DOMMouseScroll", scrollHorizontally, false);
+    })();
+</script>
+</body>
+</html>
+<!-- 
+1. Script '(1) active.js' processes sentences.csv 
+   and returns object composed of pairs: sentence_index : sentence_language
+   Sentence language is then productively used in script 2
+   This object is written out to active.json
+2. Script '(2) links.js' processes active.json and links.csv
+   It defines group of links corresponding to one number in the left column,
+   and makes this group an object. 
+   Function processGroup starts for relevant objects ( determined using active.json )
+   and makes languages key and index value.
+   Then group object is added to the list of relevant links, 
+   which is saved to file 'links.json'
+3. Script '(3) process.js' goes back to sentences.csv and uses links.json
+   It processes records in sentences.csv and take those corresponding to each language.
+   Then writes out an object for each sentence. This object consists of
+   key 's' — sentence, and 'o' - indexes of this sentence in other languages,
+   taken from links.json
+   Returns garbage-${lang}.js for each language
+4a.Script '(4a) pairs.js' takes previously generated garbage-${lang}.js
+   Language pair must be specified
+   Takes each object key and deletes it if it has no reference to other language.
+   If such references exist, sentence is being broken down to words.
+   Word becomes totally lowercase and stripped of all punctuation.
+   Separate function makes tree-like object of all characters of this word.
+   Separate function makes object, in which to every word corresponds array 
+   of sentences in which it occurs
+-->
