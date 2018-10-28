@@ -1,0 +1,169 @@
+html, body {
+    background-color: #fff1e0;
+    height: 100%;
+}
+form {
+    margin-left: 2%;
+}
+input {
+    padding: 10px;
+    font-size: 2.4em;
+}
+input[type="text"] {
+    width: 45%;
+}
+input[type="submit"] {
+    width: 26%;
+}
+input[type="button"] {
+    width: 34%
+}
+.underline {
+    text-decoration: underline;
+}
+.secondary {
+    font-size: .7em;
+    display: inline-block;
+}
+.submissionfield { 
+    width: 390px; 
+    border: 1px solid #999999; 
+    background-color: white;
+}
+.submissionbutton {
+    background-color: DodgerBlue;
+    color: white;
+}
+.autocomplete {
+    position: relative;
+    display: inline-block;
+    
+    
+    padding-top: 30px;
+    height: 88%;
+}
+
+/* */
+.autocomplete-items {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    border-bottom: none;
+    border-top: none;
+    z-index: 99;
+    /*position the autocomplete items to be the same width as the container:*/
+    top: 100%;
+    left: 0;
+    right: 0;
+}
+.autocomplete-items div {
+    padding: 10px;
+    cursor: pointer;
+    background-color: #fff; 
+    border-bottom: 1px solid #d4d4d4; 
+}
+.autocomplete-items div:hover {
+    /*when hovering an item:*/
+    background-color: #e9e9e9; 
+}
+.autocomplete-active {
+    /*when navigating through the items using the arrow keys:*/
+    background-color: DodgerBlue !important; 
+    color: #ffffff; 
+}
+img {
+    display: inline-block;
+    margin-left: 5px;
+    margin-right: 5px;
+    position: relative;
+}
+.result {
+    font-size: 1.5em;
+    font-family: Arial;
+    background-color: #fff;
+    padding: 12px;
+    margin: 12px;
+    break-inside: avoid;
+    box-shadow: 0 1px 3px    0 rgba(0,0,0,.2), 
+                0 1px 1px    0 rgba(0,0,0,.14), 
+                0 2px 1px -1px rgba(0,0,0,.12);
+}
+p {
+    display: inline;
+}
+input [type=text] {
+    background-color: white;
+}
+.interfere {
+    position: absolute;
+    display: none;
+    top: 30px;
+    bottom: 30px;
+    left: 20px;
+    right: 20px;
+    background-color: grey;
+    opacity: .99;
+}
+#wrap {
+    display: inline-block;
+    width: 50%;
+}
+@media screen and (max-width: 640px) {
+    #wrap {
+    display: block;
+    width: 101%;
+    }
+    input[type="text"] {
+    width: 94%;
+    margin-bottom: 5px;
+    }
+}
+@media screen and (min-width: 1200px) {
+    .autocomplete {
+    column-count: 2;
+    column-width: 500px;
+    }
+}
+.pair-form {
+    width: 400px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+#set1, #set2 {
+    display: grid;
+}
+fieldset {
+    border-width: 0;
+}
+label {
+    padding: 6px;
+}
+input[type=radio]:checked {
+    background-color: red;
+}
+.hex {
+    font-size: 2em;
+    background-color: cadetblue;
+    border-radius: 10px;
+    border: 2px solid black;
+    width: 1em;
+    margin-top: 5px;
+    padding-left: .5em;
+}
+.word {
+    width: 5em;
+    font-size: 2em;
+    font-family: Arial;
+    background-color: greenyellow;
+    margin-top: 5px;
+}
+#parent {
+    position: absolute;
+    display: none;
+    grid-template-columns: 70px 78px 1fr;
+    background-color: aquamarine;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    right: 3px;
+    padding: 15px;
+}
