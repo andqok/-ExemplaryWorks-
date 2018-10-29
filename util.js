@@ -239,7 +239,7 @@ dom.tagAttributes = function (tag, others) {
         // except class
         div:    ['id'],
         button: ['text'],
-        input:  ['type', 'id', 'accept'],
+        input:  ['type', 'id', 'accept', 'name', 'value'],
         label:  ['for', 'text'],
         progress: ['id', 'max', 'value'],
         p: ['id', 'text'],
@@ -257,6 +257,7 @@ dom.tagAttributes = function (tag, others) {
         for: [/for:([^,]*),/, /for:(.*)/],
         value: [/value:([^,]*),/, /value:(.*)/],
         max: [/max:([^,]*),/, /max:(.*)/],
+        name: [/name:([^,]*),/, /name:(.*)/],
     }
     tagsAttributes[tag].forEach(attribute => {
         let attributeText
