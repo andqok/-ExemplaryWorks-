@@ -5,12 +5,18 @@ const fs = require('fs')
 //})
 //getLang('eng')
 
-let checked = {}
+let checked = {
+    second: []
+}
 let langsAvailable = getLangsAvailable()
 for (let lang of langsAvailable) {
-    dom.render(a(lang), query('.langs')).addEventListener('click', e => {
+    //let langsSelect = actionify( langsDualSelect(lang), query('.langs') )
+    dom.render(langsDualSelect(lang), query('.langs')).addEventListener('click', e => {
         console.log('good')
         checked.first = queryArr('input[type=radio]:checked')[0].value
+        checked.second = queryArr('input[type=checkbox]:checked').map(val => {
+            return val.value
+        })
     })
 }
 id('words').addEventListener('click', e => {
@@ -19,8 +25,40 @@ id('words').addEventListener('click', e => {
 
 id('form').addEventListener('submit', e => {
     e.preventDefault()
+    dom.removeAllChildren(query('.autocomplete'))
     let text = query('.submissionfield').value
-    all(text)
+    let res = all(text)
+    let res2 = res.filter(el => {
+        let otherLangs = Object.keys(el.o)
+        let res
+        otherLangs.forEach(lang => {
+            if (checked.second.includes(lang)) {
+                    res = el
+            }
+        })
+        if (res) {
+            return res
+        }
+    })
+    console.log(res)
+    console.log(res2)
+    res2.forEach(s => {
+        let toRender = {
+            el: 'div.card',
+            ch: [ dom.decode(card(s.s, 'eng', 1)) ]
+        }
+        for (let lang in s.o) {
+            let sentences = findSentences( [s.o[lang] ], lang )
+            if (sentences) {
+                let theSentence = sentences[0].s
+                toRender.ch.push( dom.decode( card(theSentence, lang)) )
+            }
+        }
+        console.log(toRender)
+        dom.render(toRender, id('autocomplete'))
+    })
+    //    }
+    //}, 100)
     //let forms = lemmatizedEng[text]
     //let allForms = [text]
     //if (is.array(forms)) {
@@ -36,8 +74,7 @@ id('form').addEventListener('submit', e => {
     //}
 })
 
-function findSentences(arr, lang, lvl) {
-    lvl = lvl || 0
+function findSentences(arr, lang) {
     var a = []
     fs.readdirSync('./language/')
         .filter(str => str.includes(lang))
@@ -55,10 +92,20 @@ function findSentences(arr, lang, lvl) {
     
     function processOne(newNum) {
         let b = Array.from(a)
-        b.push(newNum)
+        let included = false
+        if (!b.includes(newNum)) {
+            b.push(newNum)
+        } else {
+            included = true
+        }
         b.sort((x, y) => x - y)
         b = b.indexOf(newNum)
-        let index = a[b - 1]
+        let index
+        if (!included) {
+            index = a[b - 1]
+        } else {
+            index = a[b]
+        }
         let readFile = fs.readFileSync(`language/${lang}-${index}.json`, 'utf8')
         let parsed = readFile.split('\r\n')
         let res
@@ -94,11 +141,8 @@ function getLangsAvailable() {
 function all(word) {
     console.log(word)
     let arr = wordseng['-words'][word.toLowerCase()]
-    let resArr = getNeighboring( findSentences(arr, 'eng') )
-    //resArr.forEach(i => {
-    //    console.log(i)
-    //})
-    console.log(resArr)
+    let resArr = findSentences(arr, 'eng')
+    return resArr
 }
 
 function getNeighboring(arr) {
