@@ -45,7 +45,7 @@ is.array = function (i) {
 }
 
 is.object = function (i) {
-    return obj === Object(i) 
+    return i === Object(i) 
     && Object.prototype.toString.call(i) !== '[object Array]'
 }
 
@@ -138,7 +138,7 @@ dom.siblingOfClass = function (_class, el) {
 
 dom.siblingSearcher = function (el) {
     return function (_class) {
-        return siblingOfClass(_class, el)
+        return dom.siblingOfClass(_class, el)
     }
 }
 
@@ -207,7 +207,8 @@ dom.make = function (tag, options, parent) {
     var element = document.createElement(tag);
     // special cases — name of attribute in options (and in html)
     //   doesn't correspond to the name of attribute in JS
-    if (options && Object.keys(options).length > 0) {
+    if (options && Object.keys(options).length) {
+
         dom.setIfDefined(options['class'], element, 'className')
         delete options['class']
         dom.setIfDefined(options['for'], element, 'htmlFor')
@@ -304,7 +305,7 @@ dom.makeFromStr = function (str, parent) {
         let text = str.match(/text=(.*)/)
         if (text) {
             options.text = text[1]
-            str = str.slice(0, str.length - text.length - 5).trim()
+            str = str.slice(0, str.length - text[0].length).trim()
         }
     }
     function parseClass() {
@@ -318,14 +319,14 @@ dom.makeFromStr = function (str, parent) {
                 classesStr = str
             }
             str = str.slice(index, str.length).trim()
-            options.class = classesStr.split('.').slice(1, 999)
+            options.class = classesStr.split('.').slice(1, 999).join(' ')
         }
     }
     function parseAttribute() {
         if (str.includes('=')) {
             let splitMultiple = str.split(',')
                 .map(i => i.trim())
-                .filter(i => { if (i.length > 0) return i })
+                .filter(i => { if (i.length) return i })
             for (let el of splitMultiple) {
                 let index = el.indexOf('=')
                 let key = el.slice(0, index)
