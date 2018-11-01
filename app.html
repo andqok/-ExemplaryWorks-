@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Document</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="style.css" rel="stylesheet">
+  <style>
+  html, body {
+    height: 100%;
+  }
+    body {
+        display: grid;
+        grid-template-columns: 400px 4fr 1fr;
+    }
+
+    .sidebar {
+        height: 100%;
+        background-color: rgb(224, 212, 212);
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+    .choose {
+        width: 90%;
+        height: 5.6%;
+        font-size: 23px;
+        background-color: green;
+        margin: 5px;
+        margin-left: 5px;
+        font-family: Arial, Helvetica, sans-serif;
+        cursor: pointer;
+    }
+
+    .find1 {
+        grid-column: 1;
+    }
+    .dictionary {
+        grid-column: 2 / 2;
+    }
+    .dictionary iframe {
+        height: 100%;
+        width: 100%;
+    }
+
+  </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="find1"></div>
+        <div class="find2"></div>
+        <div class="find3"></div>
+    </div>
+    <div class="dictionary">
+        <iframe src="http://www.larousse.fr/dictionnaires/anglais-francais/get" frameborder="0"></iframe>
+    </div>
+    <script src="res/engfra.js"></script>
+    <script src="res/fraeng.js"></script>
+    <script src="util.js"></script>
+    <script  src="words·hex·eng·4096.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        console.log( query('.find1') )
+        let hex1 = ''
+        let hex2 = ''
+        let secondLang = 'pol'
+        const hex = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+        hex.forEach(num => {
+            dom.render({
+                el: 'div.choose',
+                ch: [
+                    'label text:' + num
+                ]
+            }, query('.find1')).addEventListener('click', e => {
+                hex1 = e.srcElement.innerText
+                dom.removeAllChildren(query('.find3'))
+                console.log(e.srcElement.innerText)
+            })
+
+            dom.render({
+                el: 'div.choose',
+                ch: [
+                    'label text:' + num
+                ]
+            }, query('.find2')).addEventListener('click', e => {
+                hex2 = e.srcElement.innerText
+                console.log(e.srcElement.innerText)
+                console.log(
+                    Object.values(newwords[hex1][hex2])
+                )
+                dom.removeAllChildren( query('.find3') )
+
+                Object.values(newwords[hex1][hex2]).forEach(word => {
+                    dom.render({
+                        el: 'div.choose',
+                        ch: [
+                            'label text:' + word
+                        ]
+                    }, query('.find3')).addEventListener('click', e => {
+                        query('.dictionary iframe').setAttribute(
+                            'src', 'http://www.larousse.fr/dictionnaires/anglais-francais/' + e.srcElement.innerText
+                        )
+                    })
+                })
+            })
+        })
+      })
+
+function doResults(word) {
+    word = word.trim()
+    word = word.toLowerCase()
+    const langName1 = lang1['-lang']
+    const langName2 = lang2['-lang']
+    var list = lang1['-words'][word]
+    console.log(list)
+    var a = document.getElementById('autocomplete')
+    while (a.firstChild) {
+        a.removeChild(a.firstChild)
+    }
+
+    for (let sentence of list) {
+        var sentenceObj = lang1[sentence]
+        var l1sent = sentenceObj['s']
+
+        var l2sent
+        if (sentenceObj.o) {
+            l2sent = lang2[sentenceObj.o]['s']
+        }
+        var result = dom.make('div', {
+            class: 'result'
+        })
+        var img2 = dom.make('img', {})
+        img2.src = 'img/' + langName2 + '.png'
+        result.appendChild(img2)
+
+        var p = dom.make('p', {
+            text: l2sent + '  ',
+            class: 'primary'
+        })
+
+        var img1 = dom.make('img', {})
+        img1.src = 'img/' + langName1 + '.png'
+
+        var indexof = l1sent.toLowerCase().split(word)
+        var res = []
+        while (indexof.length > 0) {
+            var slice = indexof.shift()
+            var cutted = cut(l1sent, slice.length)
+            res.push(cutted[0])
+            l1sent = cutted[1]
+            var nextSlice = indexof[0]
+            if (nextSlice) {
+                var cutted = cut(l1sent, word.length)
+                var wordProper = cutted[0]
+                l1sent = cutted[1]
+                res.push(wordProper)
+            }
+        }
+        var lang2span = dom.make('span', {
+            class: 'secondary'
+        })
+        lang2span.appendChild(img1)
+        res.forEach(piece => {
+            if (piece.toLowerCase() === word) {
+                var thewordspan = dom.make('span', {
+                    text: piece,
+                    class: 'underline'
+                })
+                lang2span.appendChild(thewordspan)
+            } else {
+                var ordinaryspan = dom.make('span', {
+                    text: piece
+                })
+                lang2span.appendChild(ordinaryspan)
+            }
+        })
+        p.appendChild(lang2span)
+        result.appendChild(p)
+        a.appendChild(result)
+    }
+
+    }
+    </script>
+</body>
+</html>
