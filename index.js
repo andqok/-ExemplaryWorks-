@@ -1,10 +1,5 @@
 const fs = require('fs')
 
-//click('.switch', e => {
-//    alert('good')
-//})
-//getLang('eng')
-
 let checked = {
     second: []
 }
