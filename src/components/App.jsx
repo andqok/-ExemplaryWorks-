@@ -1,7 +1,8 @@
 import React, {Component} from 'react';
+import WordSearch from './WordSearch.jsx'
 
 export default class App extends Component {
     render () {
-        return <p>This is my new react app</p>
+        return <WordSearch title="mooo"/>
     }
 }
