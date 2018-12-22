@@ -1,5 +1,5 @@
 import React from 'react'
-import { lemmatized } from '../../english/lemmatized.js'
+import { lemmatized } from '../../resources/english/lemmatized.js'
 import WordSearchItem from './WordSearchItem.jsx'
 
 export default class WordSearch extends React.Component {

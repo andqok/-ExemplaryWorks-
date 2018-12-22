@@ -1,8 +1,11 @@
 function findSentences(arr, lang) {
     'use strict'
     var fs = require('fs')
+    const path = require('path')
+    var dirPath = path.join( __dirname, '../data/' )
 
-    var a = fs.readdirSync('./data/')
+
+    var a = fs.readdirSync(dirPath)
         .filter(str => str.includes(lang))
         .map(el => {
             return el.slice(0, el.length - 5).slice(4, 99)
@@ -14,7 +17,6 @@ function findSentences(arr, lang) {
     arr.forEach(el => {
         result.push( processOne(el) )
     })
-    console.log(result)
     return result
 
     function processOne(newNum) {
@@ -34,7 +36,7 @@ function findSentences(arr, lang) {
         } else {
             index = a[b]
         }
-        let readFile = fs.readFileSync(`data/${lang}-${index}.json`, 'utf8')
+        let readFile = fs.readFileSync(`${dirPath}${lang}-${index}.json`, 'utf8')
         let parsed = readFile.split('\r\n')
         let res
         for (let i = 0; i < parsed.length; i += 1) {
