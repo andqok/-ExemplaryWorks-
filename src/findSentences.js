@@ -4,7 +4,6 @@ function findSentences(arr, lang) {
     const path = require('path')
     var dirPath = path.join( __dirname, '../data/' )
 
-
     var a = fs.readdirSync(dirPath)
         .filter(str => str.includes(lang))
         .map(el => {
@@ -13,11 +12,9 @@ function findSentences(arr, lang) {
             return ar.concat(+el)
         }, []).sort((x, y) => x - y)
 
-    let result = []
-    arr.forEach(el => {
-        result.push( processOne(el) )
+    return arr.map(el => {
+        return processOne(el)
     })
-    return result
 
     function processOne(newNum) {
         newNum = +newNum

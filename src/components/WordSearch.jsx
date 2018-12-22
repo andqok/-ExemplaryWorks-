@@ -36,7 +36,20 @@ export default class WordSearch extends React.Component {
     }
 
     clickItem(e, word) {
-        findSentences(wordseng['-words'][word], 'eng')
+        let sentences = findSentences(wordseng['-words'][word], 'eng')
+        let news = sentences.map(i => {
+            let arr = [{
+                lang: 'eng',
+                sentence: i.s
+            }]
+            Object.keys(i.o).forEach(lang => {
+                arr.push({
+                    lang: lang,
+                    sentence: findSentences( [ i['o'][lang] ] , lang)[0].s
+                })
+            })
+            this.props.addCards(news)
+        })
     }
 
     render() {
