@@ -1,4 +1,4 @@
-var lemmatizedEng = {
+export const lemmatized = {
     "a": ["an"],
     "an": "a",
     "abandon": ["abandons", "abandoned", "abandoning", "abandonings"],

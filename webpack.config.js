@@ -28,5 +28,8 @@ module.exports = {
   ],
   devServer: {
     writeToDisk: true
+  },
+  node: {
+    fs: 'empty'
   }
 };
