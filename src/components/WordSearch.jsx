@@ -14,6 +14,7 @@ export default class WordSearch extends React.Component {
         this.clickItem = this.clickItem.bind(this)
     }
     keys = Object.keys(lemmatized)
+
     onInputChange(e) {
         let inputVal = e.target.value
         let newState = Object.assign(this.state)
@@ -37,6 +38,7 @@ export default class WordSearch extends React.Component {
 
     clickItem(e, word) {
         let sentences = findSentences(wordseng['-words'][word], 'eng')
+        console.log(sentences)
         let news = sentences.map(i => {
             let arr = [{
                 lang: 'eng',
@@ -48,8 +50,9 @@ export default class WordSearch extends React.Component {
                     sentence: findSentences( [ i['o'][lang] ] , lang)[0].s
                 })
             })
-            this.props.addCards(news)
+            return arr
         })
+        this.props.addCards(news)
     }
 
     render() {
@@ -58,7 +61,8 @@ export default class WordSearch extends React.Component {
                    value={this.state.inputVal}></input>
             <ul>
                 { this.state.suggestions.map((i, key) => {
-                    return <WordSearchItem key={key}
+                    return <WordSearchItem
+                                key={key}
                                 word={i}
                                 count={ this.getCount(i) }
                                 onClick={this.clickItem}/>

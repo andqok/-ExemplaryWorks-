@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import WordSearch from './WordSearch.jsx'
 import Card from './Card.jsx'
+import '../styles/App.css'
 
 export default class App extends Component {
     constructor(props) {
@@ -13,16 +14,19 @@ export default class App extends Component {
     addCards(arr) {
         let newState = Object.assign(this.state)
         newState.cards = arr
+        console.log(newState)
         this.setState(newState)
     }
     render () {
         let { cards } = this.state
 
-        return <div>
+        return <div className="App">
             <WordSearch addCards={this.addCards}/>
             <div>
-                { cards.map(c => {
-                    return <Card sentences={c} />
+                { cards.map((c, keyIndex) => {
+                    return <Card
+                                key={keyIndex}
+                                sentences={c} />
                 }) }
             </div>
         </div>

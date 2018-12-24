@@ -12,9 +12,13 @@ function findSentences(arr, lang) {
             return ar.concat(+el)
         }, []).sort((x, y) => x - y)
 
-    return arr.map(el => {
-        return processOne(el)
-    })
+    if (arr.length) {
+        return arr.map(el => {
+            return processOne(el)
+        })
+    } else {
+        return []
+    }
 
     function processOne(newNum) {
         newNum = +newNum

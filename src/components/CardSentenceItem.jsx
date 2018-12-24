@@ -5,10 +5,10 @@ export default class Card extends React.Component {
         super(props)
     }
     render() {
-        let { lang, text } = this.props
+        let { lang, sentence } = this.props
         return <div>
-            <img src={ `img/${lang}.png` }></img>
-            <p>{text}</p>
+            <img src={ `../resources/img/${lang}.png` }></img>
+            <p>{sentence}</p>
         </div>
     }
 }
