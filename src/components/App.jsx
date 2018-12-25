@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import WordSearch from './WordSearch.jsx'
 import Card from './Card.jsx'
+import TatoebaExplore from './TatoebaExplore.jsx'
 import '../styles/App.css'
 
 export default class App extends Component {
@@ -23,7 +24,8 @@ export default class App extends Component {
     }
     render () {
         let { cards } = this.state
-
+        return <TatoebaExplore/>
+        /*
         return <div className="App">
             <WordSearch addCards={this.addCards}/>
             <div>
@@ -33,6 +35,6 @@ export default class App extends Component {
                                 sentences={c} />
                 }) }
             </div>
-        </div>
+        </div>*/
     }
 }
