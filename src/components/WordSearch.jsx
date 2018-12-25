@@ -23,6 +23,7 @@ export default class WordSearch extends React.Component {
             if (inputVal.length > 1 &&  word.slice(0, inputVal.length ) === inputVal) {
                 return true
             }
+            this.props.addCards([], 'new')
             return false
         })
         this.setState(newState)
@@ -37,8 +38,9 @@ export default class WordSearch extends React.Component {
     }
 
     clickItem(e, word) {
+
         let sentences = findSentences(wordseng['-words'][word], 'eng')
-        console.log(sentences)
+
         let news = sentences.map(i => {
             let arr = [{
                 lang: 'eng',
@@ -50,9 +52,11 @@ export default class WordSearch extends React.Component {
                     sentence: findSentences( [ i['o'][lang] ] , lang)[0].s
                 })
             })
+            this.props.addCards([arr], 'add')
             return arr
         })
-        this.props.addCards(news)
+
+        //this.props.addCards(news, 'new')
     }
 
     render() {

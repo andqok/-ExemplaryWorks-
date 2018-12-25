@@ -11,10 +11,14 @@ export default class App extends Component {
         }
         this.addCards = this.addCards.bind(this)
     }
-    addCards(arr) {
+    /** mode - either 'new', 'add */
+    addCards(arr, mode) {
         let newState = Object.assign(this.state)
-        newState.cards = arr
-        console.log(newState)
+        if (mode === 'new') {
+            newState.cards = arr
+        } else if (mode === 'add') {
+            newState.cards = newState.cards.concat(arr)
+        }
         this.setState(newState)
     }
     render () {

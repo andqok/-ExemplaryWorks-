@@ -7,7 +7,7 @@ export default class Card extends React.Component {
     }
     render() {
         let { sentences } = this.props
-        return <div>
+        return <div className="card">
             { sentences.map((one, keyIndex) => {
                 let { lang, sentence } = one
 
