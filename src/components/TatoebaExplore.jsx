@@ -1,4 +1,5 @@
 import React from 'react'
+import SelectList from './SelectList.jsx'
 
 export default class TatoebaExplore extends React.Component {
     constructor(props){
@@ -8,22 +9,29 @@ export default class TatoebaExplore extends React.Component {
             selectedLangs: []
         }
         this.inputChange = this.inputChange.bind(this)
+        this.submit = this.submit.bind(this)
     }
     inputChange(e) {
-        console.log(e.target.id)
+        let selectedLang = e.target.id.slice(-3)
+        this.setState(
+            Object.assign({}, this.state, {
+                selectedLangs: this.state.selectedLangs.concat(selectedLang)
+             })
+        )
+        console.log(this.state.selectedLangs)
     }
+    submit() {
+        step1(this.state.selectedLangs, (percent, specialCounters) => {
+            console.log(percent, specialCounters)
+        })
+    }
+
     render() {
-        let { langs, selectedLangs } = this.state
         return <div>
-            { langs.map((lang, keyIndex) => {
-                return <div key={keyIndex}>
-                    <input type="checkbox"
-                           id={`input-${lang}`}
-                           onChange={this.inputChange}></input>
-                    <label htmlFor={`input-${lang}`}>{lang}</label>
-                    <span id={`count-${lang}`}></span>
-                </div>
-            }) }
+            <SelectList
+                langs={this.state.langs}
+                inputChange={this.inputChange}/>
+            <button onClick={this.submit}>Submit</button>
         </div>
     }
 }
