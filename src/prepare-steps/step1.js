@@ -38,8 +38,8 @@ function step1(langsSelected, refreshPercent) {
         writeStreams[lang] = fs.createWriteStream(tmpPath)
     })
 
-    var lineCountTotal = 0
     var active  = {}
+    var lineCountTotal = 0
     sentencesReader.on('line', (line) => {
         line = line.split("\t")
         let num = line[0]

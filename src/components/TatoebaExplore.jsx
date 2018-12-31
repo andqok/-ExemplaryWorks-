@@ -21,9 +21,10 @@ export default class TatoebaExplore extends React.Component {
         console.log(this.state.selectedLangs)
     }
     submit() {
-        step1(this.state.selectedLangs, (percent, specialCounters) => {
-            console.log(percent, specialCounters)
-        })
+        //step1(this.state.selectedLangs, (percent, specialCounters) => {
+        //    console.log(percent, specialCounters)
+        //})
+        step2()
     }
 
     render() {
